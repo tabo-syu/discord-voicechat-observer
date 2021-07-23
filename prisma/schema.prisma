@@ -14,51 +14,33 @@ model Guild {
   // discord id
   id            String         @id
   VoiceChannels VoiceChannel[]
-  Users         User[]
+  Participants  User[]
 }
 
 model VoiceChannel {
   // discord id
-  id       String    @id
-  Guild    Guild     @relation(fields: [guildId], references: [id])
-  guildId  String
-  Sessions Session[]
+  id           String    @id
+  Guild        Guild     @relation(fields: [guildId], references: [id])
+  guildId      String
+  Participants User[]
+  Sessions     Session[]
 }
 
 model User {
   // discord id
-  id       String    @id
-  Guilds   Guild[]
-  Sessions Session[]
+  id             String        @id
+  Guilds         Guild[]
+  Sessions       Session[]
+  VoiceChannel   VoiceChannel? @relation(fields: [voiceChannelId], references: [id])
+  voiceChannelId String?
 }
 
 model Session {
   id             String       @id @default(uuid())
   VoiceChannel   VoiceChannel @relation(fields: [voiceChannelId], references: [id])
   voiceChannelId String
-  Users          User[]
+  Participants   User[]
   isUsing        Boolean      @default(true)
   startedAt      DateTime     @default(now())
   endedAt        DateTime?
 }
-
-// relation models
-// model GuildsOnUsers {
-//   guild      Guild    @relation(fields: [guildId], references: [id])
-//   guildId    String
-//   user       User     @relation(fields: [userId], references: [id])
-//   userId     String
-//   assignedAt DateTime @default(now())
-
-//   @@id([guildId, userId])
-// }
-
-// model SessionsOnUsers {
-//   session    Session  @relation(fields: [sessionId], references: [id])
-//   sessionId  String
-//   user       User     @relation(fields: [userId], references: [id])
-//   userId     String
-//   assignedAt DateTime @default(now())
-
-//   @@id([sessionId, userId])
-// }
