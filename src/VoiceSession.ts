@@ -54,6 +54,13 @@ export default class VoiceSession extends EventEmitter {
     });
   }
 
+  addState(state: ChannelState[]): ChannelState[] {
+    const newState = this.voiceChannelsState.concat(state);
+    this.voiceChannelsState = newState;
+
+    return newState;
+  }
+
   #isStarted(
     oldState: ChannelState | undefined,
     newState: ChannelState

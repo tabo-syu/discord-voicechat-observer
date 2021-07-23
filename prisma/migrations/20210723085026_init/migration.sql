@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Session" ALTER COLUMN "startedAt" SET DEFAULT CURRENT_TIMESTAMP;

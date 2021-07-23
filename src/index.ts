@@ -14,6 +14,16 @@ const main = async () => {
 
   // 初期化処理
   client.on('guildCreate', async (guild) => {
+    const channelState = guild.channels.cache
+      .filter((channel) => channel.type === 'voice')
+      .map((channel) => ({
+        id: channel.id,
+        guildId: channel.guild.id,
+        members: channel.members,
+      }));
+    console.log(vs.addState(channelState));
+
+    await prisma.$connect();
     const members = await guild.members.fetch();
     const users = members
       .filter((member) => member.user.bot === false)
@@ -44,20 +54,112 @@ const main = async () => {
       data: voiceChannels,
       skipDuplicates: true,
     });
-    console.log(voiceChannelRecordCount);
+    await prisma.$disconnect();
 
+    console.log(voiceChannelRecordCount);
     console.log('joined server');
   });
 
+  // サーバーにユーザーが追加されたとき
+  client.on('guildMemberAdd', async (member) => {
+    if (member.user.bot) {
+      return;
+    }
+
+    await prisma.$connect();
+    const userId = member.user.id;
+    await prisma.user.upsert({
+      where: {
+        id: userId,
+      },
+      update: {
+        Guilds: {
+          connect: { id: member.guild.id },
+        },
+      },
+      create: {
+        id: userId,
+        Guilds: {
+          connect: { id: member.guild.id },
+        },
+      },
+    });
+    await prisma.$disconnect();
+  });
+
+  // セッション時の関数
   const vs = new VoiceSession(client);
   vs.on('started', async (oldState: ChannelState, newState: ChannelState) => {
     console.log('started');
+
+    await prisma.$connect();
+    const users = newState.members.map((member) => ({ id: member.user.id }));
+    const record = await prisma.session.create({
+      data: {
+        VoiceChannel: {
+          connect: { id: newState.id },
+        },
+        Users: {
+          connect: users,
+        },
+      },
+    });
+    await prisma.$disconnect();
+
+    console.log(record);
+    console.log('--------------------');
   });
-  vs.on('ended', (oldState: ChannelState, newState: ChannelState) => {
+
+  vs.on('ended', async (oldState: ChannelState, newState: ChannelState) => {
     console.log('ended');
+
+    await prisma.$connect();
+    const record = await prisma.session.updateMany({
+      where: {
+        isUsing: true,
+        voiceChannelId: newState.id,
+      },
+      data: {
+        isUsing: false,
+        endedAt: new Date(),
+      },
+    });
+    await prisma.$disconnect();
+
+    console.log(record);
+    console.log('--------------------');
   });
-  vs.on('updated', (oldState: ChannelState, newState: ChannelState) => {
-    console.log('ended');
+
+  vs.on('updated', async (oldState: ChannelState, newState: ChannelState) => {
+    console.log('updated');
+
+    if (oldState.members.size > newState.members.size) {
+      return;
+    }
+
+    await prisma.$connect();
+    const session = await prisma.session.findFirst({
+      where: {
+        isUsing: true,
+        voiceChannelId: newState.id,
+      },
+    });
+
+    const users = newState.members.map((member) => ({ id: member.user.id }));
+    const record = await prisma.session.update({
+      where: {
+        id: session?.id,
+      },
+      data: {
+        Users: {
+          connect: users,
+        },
+      },
+    });
+    await prisma.$disconnect();
+
+    console.log(record);
+    console.log('--------------------');
   });
 };
 

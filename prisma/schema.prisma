@@ -37,7 +37,8 @@ model Session {
   VoiceChannel   VoiceChannel @relation(fields: [voiceChannelId], references: [id])
   voiceChannelId String
   Users          User[]
-  startedAt      DateTime
+  isUsing        Boolean      @default(true)
+  startedAt      DateTime     @default(now())
   endedAt        DateTime?
 }
 
