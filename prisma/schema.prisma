@@ -24,23 +24,33 @@ model VoiceChannel {
   guildId      String
   Participants User[]
   Sessions     Session[]
+  updatedAt    DateTime  @updatedAt
 }
 
 model User {
   // discord id
   id             String        @id
   Guilds         Guild[]
-  Sessions       Session[]
+  SessionLogs    SessionLog[]
   VoiceChannel   VoiceChannel? @relation(fields: [voiceChannelId], references: [id])
   voiceChannelId String?
 }
 
 model Session {
   id             String       @id @default(uuid())
+  SessionLogs    SessionLog[]
   VoiceChannel   VoiceChannel @relation(fields: [voiceChannelId], references: [id])
   voiceChannelId String
-  Participants   User[]
-  isUsing        Boolean      @default(true)
-  startedAt      DateTime     @default(now())
+  startedAt      DateTime
   endedAt        DateTime?
+}
+
+model SessionLog {
+  id        String   @id @default(uuid())
+  Session   Session  @relation(fields: [sessionId], references: [id])
+  sessionId String
+  User      User     @relation(fields: [userId], references: [id])
+  userId    String
+  action    String
+  createdAt DateTime
 }
