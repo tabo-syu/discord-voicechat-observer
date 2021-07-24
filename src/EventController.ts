@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, User } from '@prisma/client';
 import { Client } from 'discord.js';
 
 import TableManager from './Tables/TableManager';
@@ -8,12 +8,12 @@ import { StateRecord } from './types';
 export default class EventController {
   db: TableManager;
   client: Client;
-  vs: VoiceSession;
+  voiceSession: VoiceSession;
 
   constructor(client: Client, prisma: PrismaClient) {
     this.client = client;
     this.db = new TableManager(prisma);
-    this.vs = new VoiceSession();
+    this.voiceSession = new VoiceSession();
 
     this.client.on('guildCreate', async (guild) => {
       await this.db.initialize(guild);
@@ -27,27 +27,38 @@ export default class EventController {
       const guildId = newState.guild.id;
       const [oldChannelState, newChannelState] =
         await this.db.updateVoiceChannels(guildId, newState);
-      this.vs.submit(oldChannelState, newChannelState);
+      this.voiceSession.submit(oldChannelState, newChannelState);
     });
 
-    this.vs.on(
-      'started',
-      (oldState: StateRecord[], newState: StateRecord[]) => {
-        console.log('started');
-        console.log('------------------');
+    this.voiceSession.on(
+      'userJoined',
+      async (user: User, oldRecord: StateRecord, newRecord: StateRecord) => {
+        const oldUser = oldRecord.Participants;
+        const newUser = newRecord.Participants;
+
+        if (oldUser.length === 0 && newUser.length === 1) {
+          console.log('-------------');
+          console.log('session start');
+          await this.db.startSession(newRecord);
+        }
+        console.log('user joined', user);
+        await this.db.addSessionLog(user, 'joined');
       }
     );
 
-    this.vs.on('ended', (oldState: StateRecord[], newState: StateRecord[]) => {
-      console.log('ended');
-      console.log('------------------');
-    });
+    this.voiceSession.on(
+      'userLeft',
+      async (user: User, oldRecord: StateRecord, newRecord: StateRecord) => {
+        const oldUser = oldRecord.Participants;
+        const newUser = newRecord.Participants;
 
-    this.vs.on(
-      'updated',
-      (oldState: StateRecord[], newState: StateRecord[]) => {
-        console.log('updated');
-        console.log('------------------');
+        console.log('user left', user);
+        await this.db.addSessionLog(user, 'left');
+        if (oldUser.length === 1 && newUser.length === 0) {
+          console.log('session end');
+          console.log('-------------');
+          await this.db.endSession(newRecord);
+        }
       }
     );
   }

@@ -1,11 +1,11 @@
-import { PrismaClient, User } from '.prisma/client';
+import { PrismaClient, User } from '@prisma/client';
 import { Guild, GuildMember } from 'discord.js';
 
 export default class UserTable {
-  prisma: PrismaClient;
+  user;
 
   constructor(prisma: PrismaClient) {
-    this.prisma = prisma;
+    this.user = prisma.user;
   }
 
   async initialize(guild: Guild): Promise<{ id: string }[]> {
@@ -14,7 +14,7 @@ export default class UserTable {
       .filter((member) => member.user.bot === false)
       .map((member) => ({ id: member.user.id }));
 
-    await this.prisma.user.createMany({
+    await this.user.createMany({
       data: users,
       skipDuplicates: true,
     });
@@ -26,7 +26,7 @@ export default class UserTable {
 
   async upsert(member: GuildMember): Promise<User> {
     const userId = member.user.id;
-    const user = await this.prisma.user.upsert({
+    const user = await this.user.upsert({
       where: {
         id: userId,
       },

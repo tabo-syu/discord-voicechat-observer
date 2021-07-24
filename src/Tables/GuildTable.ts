@@ -2,17 +2,17 @@ import { PrismaClient, Guild as GuildRecord } from '.prisma/client';
 import { Guild } from 'discord.js';
 
 export default class GuildTable {
-  prisma: PrismaClient;
+  guild;
 
   constructor(prisma: PrismaClient) {
-    this.prisma = prisma;
+    this.guild = prisma.guild;
   }
 
   async initialize(
     guild: Guild,
     users: { id: string }[]
   ): Promise<GuildRecord> {
-    const record = await this.prisma.guild.create({
+    const record = await this.guild.create({
       data: {
         id: guild.id,
         Participants: {

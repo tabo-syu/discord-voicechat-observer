@@ -15,20 +15,23 @@ export default class VoiceSession extends EventEmitter {
         continue;
       }
 
-      if (
-        oldRecord.Participants.length === 0 &&
-        newRecord.Participants.length === 1
-      ) {
-        this.emit('started', oldRecord, newRecord);
-      } else if (
-        oldRecord.Participants.length === 1 &&
-        newRecord.Participants.length === 0
-      ) {
-        this.emit('ended', oldRecord, newRecord);
-      } else if (
-        oldRecord.Participants.length !== newRecord.Participants.length
-      ) {
-        this.emit('updated', oldRecord, newRecord);
+      const oldUsers = oldRecord.Participants;
+      const newUsers = newRecord.Participants;
+
+      if (oldUsers.length < newUsers.length) {
+        const diffUser = newUsers.filter(
+          (newUser) =>
+            oldUsers.find((oldUser) => oldUser.id === newUser.id) === undefined
+        )[0];
+        this.emit('userJoined', diffUser, oldRecord, newRecord);
+      }
+
+      if (oldUsers.length > newUsers.length) {
+        const diffUser = oldUsers.filter(
+          (oldUser) =>
+            newUsers.find((newUser) => newUser.id === oldUser.id) === undefined
+        )[0];
+        this.emit('userLeft', diffUser, oldRecord, newRecord);
       }
     }
   }
