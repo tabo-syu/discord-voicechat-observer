@@ -1,5 +1,7 @@
-import { PrismaClient, VoiceChannel, User } from '.prisma/client';
+import { PrismaClient } from '.prisma/client';
 import { Guild, VoiceState } from 'discord.js';
+
+import { StateRecord } from '../types';
 
 export default class VoiceChannelTable {
   prisma: PrismaClient;
@@ -30,11 +32,7 @@ export default class VoiceChannelTable {
     return voiceChannels;
   }
 
-  async findByGuild(guildId: string): Promise<
-    (VoiceChannel & {
-      Participants: User[];
-    })[]
-  > {
+  async findByGuild(guildId: string): Promise<StateRecord[]> {
     const voiceChannels = await this.prisma.voiceChannel.findMany({
       where: {
         guildId: guildId,
@@ -47,9 +45,7 @@ export default class VoiceChannelTable {
     return voiceChannels;
   }
 
-  async updateVoiceChannels(
-    state: VoiceState
-  ): Promise<(VoiceChannel & { Participants: User[] })[]> {
+  async updateVoiceChannels(state: VoiceState): Promise<StateRecord[]> {
     const channelsState = state.guild.channels.cache
       .filter((channel) => channel.type === 'voice')
       .map((channel) => {

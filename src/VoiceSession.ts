@@ -1,15 +1,13 @@
 import EventEmitter from 'events';
-import { VoiceChannel, User } from '@prisma/client';
+
+import { StateRecord } from './types';
 
 export default class VoiceSession extends EventEmitter {
   constructor() {
     super();
   }
 
-  submit(
-    oldRecords: (VoiceChannel & { Participants: User[] })[],
-    newRecords: (VoiceChannel & { Participants: User[] })[]
-  ): void {
+  submit(oldRecords: StateRecord[], newRecords: StateRecord[]): void {
     for (const newRecord of newRecords) {
       const oldRecord = oldRecords.find((record) => record.id === newRecord.id);
 

@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import { Client, Intents } from 'discord.js';
 import { PrismaClient } from '@prisma/client';
+
 import EventController from './EventController';
 
 dotenv.config();

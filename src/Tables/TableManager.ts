@@ -45,29 +45,19 @@ export default class TableManager {
     await this.prisma.$disconnect();
   }
 
-  async getVoiceChannelState(
-    guildId: string
-  ): Promise<(VoiceChannel & { Participants: User[] })[]> {
-    await this.prisma.$connect();
-
-    const voiceChannelsState = await this.voiceChannel.findByGuild(guildId);
-
-    await this.prisma.$disconnect();
-
-    return voiceChannelsState;
-  }
-
   async updateVoiceChannels(
+    guildId: string,
     voiceState: VoiceState
-  ): Promise<(VoiceChannel & { Participants: User[] })[]> {
+  ): Promise<(VoiceChannel & { Participants: User[] })[][]> {
     await this.prisma.$connect();
 
-    const voiceChannelsState = await this.voiceChannel.updateVoiceChannels(
+    const oldChannelState = await this.voiceChannel.findByGuild(guildId);
+    const newChannelsState = await this.voiceChannel.updateVoiceChannels(
       voiceState
     );
 
     await this.prisma.$disconnect();
 
-    return voiceChannelsState;
+    return [oldChannelState, newChannelsState];
   }
 }
