@@ -16,7 +16,7 @@ export default class SessionLogTable {
     if (session === null) {
       return;
     }
-    const sessionLog = this.sessionLog.create({
+    const sessionLog = await this.sessionLog.create({
       data: {
         userId: user.id,
         sessionId: session.id,

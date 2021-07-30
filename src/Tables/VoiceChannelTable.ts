@@ -59,8 +59,8 @@ export default class VoiceChannelTable {
         };
       });
 
-    const result = channelsState.map((channelState) => {
-      return this.voiceChannel.update({
+    const result = channelsState.map(async (channelState) => {
+      return await this.voiceChannel.update({
         where: {
           id: channelState.id,
         },
@@ -76,6 +76,6 @@ export default class VoiceChannelTable {
       });
     });
 
-    return Promise.all(result);
+    return await Promise.all(result);
   }
 }
